@@ -1,0 +1,9 @@
+opencv-python
+imread-from-url
+onnxruntime
+cap-from-youtube
+pymongo
+python-dotenv
+cloudinary
+moviepy
+vidgear
