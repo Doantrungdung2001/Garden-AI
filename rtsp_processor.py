@@ -13,7 +13,7 @@ import cloudinary.uploader
 import cloudinary.api
 from vidgear.gears import CamGear
 from dotenv import load_dotenv
-
+from send_mail import send_email
 
 load_dotenv(override=True)
 
@@ -136,10 +136,15 @@ class RTSPProcessor:
                     start_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                     recording = True  # Bắt đầu ghi video khi phát hiện người
                     print(f"Phát hiện người tại {rtsp_link} lúc {start_time}")
+                    
+                    # Gọi hàm gửi email ở đây
+                    print(f"Thực hiện gửi email cảnh báo")
+                    send_email()
+                    
             else:
                 if person_detected and last_detection_time is not None:
                     elapsed_time_since_last_detection = datetime.now() - last_detection_time
-                    if elapsed_time_since_last_detection.total_seconds() > 2:
+                    if elapsed_time_since_last_detection.total_seconds() > 60:
                         person_detected = False
                         print(f"Ngừng phát hiện người tại {rtsp_link}")
                         end_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
