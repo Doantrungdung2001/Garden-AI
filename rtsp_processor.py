@@ -13,7 +13,7 @@ import cloudinary.uploader
 import cloudinary.api
 from vidgear.gears import CamGear
 from dotenv import load_dotenv
-from send_mail import send_email
+
 
 load_dotenv(override=True)
 
@@ -46,11 +46,11 @@ class RTSPProcessor:
                             print("Cập nhật danh sách RTSP URLs từ MongoDB here...")
                             self.load_rtsp_links()
                             self.last_change_time = latest_change_time
-                            
+
 
                 except Exception as e:
                     print(f"Lỗi khi kiểm tra thay đổi trong collection 'Cameras': {e}")
-                
+
                 # Chờ một khoảng thời gian trước khi kiểm tra lại
                 time.sleep(10)
 
@@ -61,7 +61,7 @@ class RTSPProcessor:
 
     def log_detection(self, camera_id, start_time, end_time, video_url):
         self.db_handler.insert_detection_log(camera_id, start_time, end_time, video_url)
-    
+
     def upload_video_to_cloudinary(self, video_path, camera_id, start_time, end_time):
         try:
             # Tải video lên Cloudinary
@@ -73,10 +73,10 @@ class RTSPProcessor:
             )
             print(f"Uploaded video {video_path} to Cloudinary")
             print("responce:", response)
-            
+
             # Lấy URL của video từ response của Cloudinary
             video_url = response['secure_url']
-            
+
             # Xóa video sau khi hoàn thành ghi và upload
             self.delete_video(video_path)
             print(f"Đã xóa video {video_path}")
@@ -107,8 +107,8 @@ class RTSPProcessor:
         except Exception as e:
             print("Error while open youtube link: ", e)
             return
-        
-        
+
+
 
         person_detected = False
         start_time = None
@@ -136,21 +136,16 @@ class RTSPProcessor:
                     start_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                     recording = True  # Bắt đầu ghi video khi phát hiện người
                     print(f"Phát hiện người tại {rtsp_link} lúc {start_time}")
-                    
-                    # Gọi hàm gửi email ở đây
-                    print(f"Thực hiện gửi email cảnh báo")
-                    send_email()
-                    
             else:
                 if person_detected and last_detection_time is not None:
                     elapsed_time_since_last_detection = datetime.now() - last_detection_time
-                    if elapsed_time_since_last_detection.total_seconds() > 60:
+                    if elapsed_time_since_last_detection.total_seconds() > 2:
                         person_detected = False
                         print(f"Ngừng phát hiện người tại {rtsp_link}")
                         end_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                         if recording:
                             out.release()  # Đảm bảo rằng video cuối cùng được đóng sau khi kết thúc luồng
-                            
+
                         recording = False  # Dừng ghi video khi không phát hiện nữa
                         # Upload video phát hiện lên Cloudinary
                         upload_thread = threading.Thread(target=self.upload_video_to_cloudinary, args=(video_path, camera_id, start_time, end_time))
@@ -165,11 +160,11 @@ class RTSPProcessor:
                     if not os.path.exists(video_path):
                         fourcc = cv2.VideoWriter_fourcc(*'XVID')
                         out = cv2.VideoWriter(video_path, fourcc, 30 / self.frame_skip, (frame.shape[1], frame.shape[0]))
-                    
+
                     if current_frame_count % self.frame_skip == 0:
                         out.write(frame)
                     current_frame_count += 1
-        
+
         print(f"Kết thúc xử lý luồng cho URL: {rtsp_link}")
 
     def delete_video(self, video_path):
@@ -202,7 +197,7 @@ class RTSPProcessor:
                 # Nếu có sự thay đổi, xóa tất cả các luồng hiện tại và bắt đầu lại từ đầu
                 for thread in threads:
                     thread.join()  # Đợi cho tất cả các luồng hiện tại kết thúc
-                    
+
                 threads.clear()  # Xóa tất cả các luồng
 
                 # Tạo lại các luồng cho các liên kết RTSP mới
